@@ -158,6 +158,7 @@ class UserLoginAPI(APIView):
         """
         User login api
         """
+        print('test post')
         data = request.data
         user = auth.authenticate(username=data["username"], password=data["password"])
         # None is returned if username or password is wrong
