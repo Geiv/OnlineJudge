@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractBaseUser
 from django.conf import settings
 from django.db import models
+
+from school.models import School
 from utils.models import JSONField
 
 
@@ -32,6 +34,8 @@ class User(AbstractBaseUser):
     username = models.TextField(unique=True)
     email = models.TextField(null=True)
     create_time = models.DateTimeField(auto_now_add=True, null=True)
+    # 用户所属学校
+    school = models.ForeignKey(School, models.CASCADE, null=True, blank=True)
     # student or teacher
     role_type = models.TextField(default=RoleType.STUDENT)
     # One of UserType

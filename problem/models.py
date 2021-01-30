@@ -1,6 +1,9 @@
 from django.db import models
-from utils.models import JSONField
+from rest_framework.exceptions import ValidationError
 
+from school.models import School
+from utils.models import JSONField
+from django.contrib.postgres.fields import ArrayField
 from account.models import User
 from contest.models import Contest
 from utils.models import RichTextField
@@ -94,3 +97,32 @@ class Problem(models.Model):
     def add_ac_number(self):
         self.accepted_number = models.F("accepted_number") + 1
         self.save(update_fields=["accepted_number"])
+
+
+class SimpleProblem(models.Model):
+    # display ID
+    _id = models.TextField(db_index=True)
+    lang_type = models.TextField()
+    problem_type = models.TextField()
+    problem_title = models.TextField()
+    problem_content = RichTextField()
+    # 问题是学校私有的还是公开的,默认是私有的，这个字段只有在school不为null时才生效
+    private = models.BooleanField(default=False)
+    # 问题所属学校
+    school = models.ForeignKey(School, models.CASCADE, null=True, blank=True)
+    # 不会真的有答案超过120个字符吧？不会吧？不会吧？
+    options = ArrayField(models.CharField(max_length=120))
+    answers = ArrayField(models.CharField(max_length=120))
+    # 问题创建者
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        if not (self.lang_type in ['C++', 'python', 'contest', 'innovation']):
+            raise ValidationError('lang_type参数错误!')
+
+        if not (self.problem_type in ['choice', 'question', 'comprehend']):
+            raise ValidationError('problem_type参数错误!')
+        super().save(*args, **kwargs)
+
+    class Meta:
+        unique_together = (("lang_type", "problem_type", "problem_title", "created_by"), ("lang_type", "problem_type", "problem_content", "created_by"))
