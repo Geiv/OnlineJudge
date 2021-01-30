@@ -63,6 +63,9 @@ class User(AbstractBaseUser):
     def is_admin_role(self):
         return self.admin_type in [AdminType.ADMIN, AdminType.SUPER_ADMIN]
 
+    def is_teacher_role(self):
+        return self.role_type in [RoleType.TEACHER]
+
     def can_mgmt_all_problem(self):
         return self.problem_permission == ProblemPermission.ALL
 

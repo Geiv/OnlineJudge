@@ -12,6 +12,7 @@ from .models import ProblemPermission
 class BasePermissionDecorator(object):
     def __init__(self, func):
         self.func = func
+        self.message = None
 
     def __get__(self, obj, obj_type):
         return functools.partial(self.__call__, obj)
@@ -27,7 +28,10 @@ class BasePermissionDecorator(object):
                 return self.error("Your account is disabled")
             return self.func(*args, **kwargs)
         else:
-            return self.error("Please login first")
+            if not self.message:
+                return self.error("Please login first")
+            else:
+                return self.error(self.message)
 
     def check_permission(self):
         raise NotImplementedError()
@@ -49,6 +53,12 @@ class admin_role_required(BasePermissionDecorator):
         user = self.request.user
         return user.is_authenticated and user.is_admin_role()
 
+
+class teacher_role_required(BasePermissionDecorator):
+    def check_permission(self):
+        user = self.request.user
+        self.message = "您没有教师权限!"
+        return user.is_authenticated and user.is_teacher_role()
 
 class problem_permission_required(admin_role_required):
     def check_permission(self):
@@ -119,7 +129,9 @@ def check_contest_permission(check_type="details"):
 
             if self.contest.contest_type == ContestType.PASSWORD_PROTECTED_CONTEST:
                 # password error
-                if not check_contest_password(request.session.get(CONTEST_PASSWORD_SESSION_KEY, {}).get(self.contest.id), self.contest.password):
+                if not check_contest_password(
+                        request.session.get(CONTEST_PASSWORD_SESSION_KEY, {}).get(self.contest.id),
+                        self.contest.password):
                     return self.error("Wrong password or password expired")
 
             # regular user get contest problems, ranks etc. before contest started
@@ -132,7 +144,9 @@ def check_contest_permission(check_type="details"):
                     return self.error(f"No permission to get {check_type}")
 
             return func(*args, **kwargs)
+
         return _check_permission
+
     return decorator
 
 
