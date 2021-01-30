@@ -16,6 +16,11 @@ class ProblemPermission(object):
     ALL = "All"
 
 
+class RoleType(object):
+    STUDENT = 'student'
+    TEACHER = 'teacher'
+
+
 class UserManager(models.Manager):
     use_in_migrations = True
 
@@ -27,6 +32,8 @@ class User(AbstractBaseUser):
     username = models.TextField(unique=True)
     email = models.TextField(null=True)
     create_time = models.DateTimeField(auto_now_add=True, null=True)
+    # student or teacher
+    role_type = models.TextField(default=RoleType.STUDENT)
     # One of UserType
     admin_type = models.TextField(default=AdminType.REGULAR_USER)
     problem_permission = models.TextField(default=ProblemPermission.NONE)
