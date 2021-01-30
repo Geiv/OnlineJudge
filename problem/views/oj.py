@@ -120,13 +120,14 @@ class ContestProblemAPI(APIView):
 
 class SimpleProblemsAPI(CSRFExemptAPIView):
     """只有role_type为teacher可以对问题进行增删改"""
+
     @teacher_role_required
     def post(self, request):
         # 添加问题
 
         data = request.data
         data["created_by"] = request.user
-
+        data["school"] = request.user.school
         try:
             simple_problem = SimpleProblem.objects.create(**data)
             simple_problem.save()
@@ -144,4 +145,26 @@ class SimpleProblemsAPI(CSRFExemptAPIView):
 
     def get(self, request):
         # todo: 获取问题暂时没有进行登录权限的判断
-        return self.success("hahahha")
+        lang_type = request.GET.get("lang_type", None)
+        problem_type = request.GET.get("problem_type", None)
+
+        # 先按照条件进行筛选
+        if lang_type and problem_type:
+            problems = SimpleProblem.objects.filter(lang_type=lang_type, problem_type=problem_type)
+        elif lang_type and not problem_type:
+            problems = SimpleProblem.objects.filter(lang_type=lang_type)
+        elif not lang_type and problem_type:
+            problems = SimpleProblem.objects.filter(problem_type=problem_type)
+        else:
+            problems = SimpleProblem.objects.all()
+
+        # 再按照权限进行筛选
+        if request.user.is_authenticated:
+            # 如果已经登录则同学校的题目也能获取
+            problems = problems.filter(Q(private=False) | Q(school=None) | Q(school=request.user.school))
+        else:
+            # 否则只能获取公开题目
+            problems = problems.filter(Q(private=False) | Q(school=None))
+
+        data = self.paginate_data(request, problems, SimpleProblemsSerializer)
+        return self.success(data)

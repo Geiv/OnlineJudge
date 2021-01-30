@@ -100,8 +100,6 @@ class Problem(models.Model):
 
 
 class SimpleProblem(models.Model):
-    # display ID
-    _id = models.TextField(db_index=True)
     lang_type = models.TextField()
     problem_type = models.TextField()
     problem_title = models.TextField()
@@ -117,7 +115,7 @@ class SimpleProblem(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
-        if not (self.lang_type in ['C++', 'python', 'contest', 'innovation']):
+        if not (self.lang_type in ['CPP', 'python', 'contest', 'innovation']):
             raise ValidationError('lang_type参数错误!')
 
         if not (self.problem_type in ['choice', 'question', 'comprehend']):

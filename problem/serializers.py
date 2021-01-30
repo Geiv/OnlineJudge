@@ -280,4 +280,4 @@ class FPSProblemSerializer(serializers.Serializer):
 class SimpleProblemsSerializer(serializers.ModelSerializer):
     class Meta:
         model = SimpleProblem
-        fields = '__all__'
+        exclude = ("school", "answers", "created_by")
