@@ -118,7 +118,7 @@ class SimpleProblem(models.Model):
         if not (self.lang_type in ['CPP', 'python', 'contest', 'innovation']):
             raise ValidationError('lang_type参数错误!')
 
-        if not (self.problem_type in ['choice', 'question', 'comprehend']):
+        if not (self.problem_type in ['choice', 'question', 'comprehend', 'complete']):
             raise ValidationError('problem_type参数错误!')
         super().save(*args, **kwargs)
 
