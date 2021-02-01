@@ -6,13 +6,14 @@ from django.db import transaction, IntegrityError
 from django.db.models import Q
 from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password
+from rest_framework.exceptions import ValidationError
 
 from submission.models import Submission
 from utils.api import APIView, validate_serializer
 from utils.shortcuts import rand_str
 
 from ..decorators import super_admin_required
-from ..models import AdminType, ProblemPermission, User, UserProfile
+from ..models import AdminType, ProblemPermission, User, UserProfile, School
 from ..serializers import EditUserSerializer, UserAdminSerializer, GenerateUserSerializer
 from ..serializers import ImportUserSeralizer
 
@@ -59,11 +60,22 @@ class UserAdminAPI(APIView):
         if User.objects.filter(email=data["email"].lower()).exclude(id=user.id).exists():
             return self.error("Email already exists")
 
+        # 先检查学校存不存在
+        school = data['school']
+        if school:
+            try:
+                school = School.objects.get(id=data["school"])
+            except Exception as e:
+                print(e)
+                return self.error("学校id错误!")
+        user.school = school
+
         pre_username = user.username
         user.username = data["username"].lower()
         user.email = data["email"].lower()
         user.admin_type = data["admin_type"]
         user.is_disabled = data["is_disabled"]
+        user.role_type = data["role_type"]
 
         if data["admin_type"] == AdminType.ADMIN:
             user.problem_permission = data["problem_permission"]
@@ -92,7 +104,12 @@ class UserAdminAPI(APIView):
 
         user.two_factor_auth = data["two_factor_auth"]
 
-        user.save()
+        try:
+            user.save()
+        except ValidationError as e:
+            # 数据不符合要求
+            return self.error(e.get_full_details()[0]['message'])
+
         if pre_username != user.username:
             Submission.objects.filter(username=pre_username).update(username=user.username)
 

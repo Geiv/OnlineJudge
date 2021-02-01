@@ -50,11 +50,16 @@ class ImportUserSeralizer(serializers.Serializer):
 
 class UserAdminSerializer(serializers.ModelSerializer):
     real_name = serializers.SerializerMethodField()
+    school_name = serializers.SerializerMethodField()
+
+    def get_school_name(self, obj):
+        return obj.school if not obj.school else obj.school.school_name
 
     class Meta:
         model = User
         fields = ["id", "username", "email", "admin_type", "problem_permission", "real_name",
-                  "create_time", "last_login", "two_factor_auth", "open_api", "is_disabled"]
+                  "create_time", "last_login", "two_factor_auth", "open_api", "is_disabled", "school_name", "role_type",
+                  "school"]
 
     def get_real_name(self, obj):
         return obj.userprofile.real_name
@@ -95,6 +100,8 @@ class EditUserSerializer(serializers.Serializer):
     open_api = serializers.BooleanField()
     two_factor_auth = serializers.BooleanField()
     is_disabled = serializers.BooleanField()
+    school = serializers.IntegerField()
+    role_type = serializers.CharField(max_length=32)
 
 
 class EditUserProfileSerializer(serializers.Serializer):

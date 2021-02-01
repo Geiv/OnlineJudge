@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser
 from django.conf import settings
 from django.db import models
+from rest_framework.exceptions import ValidationError
 
 from school.models import School
 from utils.models import JSONField
@@ -75,6 +76,12 @@ class User(AbstractBaseUser):
 
     def is_contest_admin(self, contest):
         return self.is_authenticated and (contest.created_by == self or self.admin_type == AdminType.SUPER_ADMIN)
+
+    def save(self, *args, **kwargs):
+        if not (self.role_type in [RoleType.TEACHER, RoleType.STUDENT]):
+            raise ValidationError('role_type参数错误!')
+        super().save(*args, **kwargs)
+
 
     class Meta:
         db_table = "user"
